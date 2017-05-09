@@ -20,9 +20,23 @@ public:
 	* ウィンドウの初期化関数
 	*
 	* hInstance	呼び出し元のインスタンスハンドル
-	* nCmdShow	ウィンドウの表示方法（サイズやアクティブかどうかなど）を指定する定数
 	*/
-	HRESULT initialize(HINSTANCE hInstance, int nCmdShow);
+	HRESULT initialize(HINSTANCE hInstance);
+
+	/**
+	* ウィンドウハンドルを取得
+	*/
+	HWND getWindowHandle() const { return hWnd; };
+
+	/**
+	* クライアント領域の幅を取得
+	*/
+	UINT getWidth() const;
+
+	/**
+	* クライアント領域の高さを取得
+	*/
+	UINT getHeight() const;
 
 private:
 	/**
@@ -35,4 +49,7 @@ private:
 	* lParam	メッセージの付加情報（メッセージの種類によって変わる）
 	*/
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+
+	// メンバ
+	HWND hWnd; // ウィンドウハンドル
 };

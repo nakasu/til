@@ -1,6 +1,6 @@
 ﻿#include "window.h"
 
-HRESULT Window::initialize(HINSTANCE hInstance, int nCmdShow) {
+HRESULT Window::initialize(HINSTANCE hInstance) {
 	//---------------------------------------------------
 	// ウィンドウクラス（ウィンドウを定義する構造体）の作成
 	//---------------------------------------------------
@@ -34,7 +34,7 @@ HRESULT Window::initialize(HINSTANCE hInstance, int nCmdShow) {
 													   // CreateWindowで指定するのはウィンドウ全体（タイトルバー等を含む）の
 													   // サイズなので調整する必要がある
 
-	HWND hWnd = CreateWindow(
+	hWnd = CreateWindow(
 		TEXT("TutorialWindowClass"), // 使用するウィンドウクラス名
 		TEXT("Direct3D 11 Tutorial 01"), // ウィンドウタイトル（タイトルバーに表示する文字列）
 		WS_OVERLAPPEDWINDOW, // ウィンドウスタイル
@@ -72,4 +72,16 @@ LRESULT CALLBACK Window::WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lPar
 	}
 
 	return DefWindowProc(hWnd, Msg, wParam, lParam); // 基本的なウィンドウプロシージャの動作を行わせる
+}
+
+UINT Window::getWidth() const {
+	RECT rc;
+	GetClientRect(hWnd, &rc);
+	return rc.right - rc.left;
+}
+
+UINT Window::getHeight() const {
+	RECT rc;
+	GetClientRect(hWnd, &rc);
+	return rc.bottom - rc.top;
 }
