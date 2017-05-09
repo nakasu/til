@@ -4,13 +4,16 @@
 #include "device.h"
 #include "vertex_shader.h"
 #include "pixel_shader.h"
+#include "vertex_buffer.h"
 
 /**
 * 描画（レンダリング）を行う関数
 *
-* device	描画に使用するデバイス
+* device		描画に使用するデバイス
+* vertex_shader	使用する頂点シェーダ
+* pixel_shader	使用するピクセルシェーダ
 */
-void Render(const Device& device);
+void Render(const Device& device, const VertexShader& vertex_shader, const PixelShader& pixel_shader);
 
 /**
 * hInstance		インスタンスハンドル（プログラムを識別するためのハンドル）
@@ -24,6 +27,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	Device			device;
 	VertexShader	vertex_shader;
 	PixelShader		pixel_shader;
+	VertexBuffer	vertex_buffer;
 
 	//-------------------
 	// ウィンドウの初期化
@@ -51,6 +55,18 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	// ピクセルシェーダの初期化
 	//-------------------------
 	if (FAILED(pixel_shader.initialize("./Debug/pixel_shader.cso", device)))
+		return 0;
+
+	//---------------------
+	// 頂点バッファの初期化
+	//---------------------
+	DirectX::XMFLOAT3 vertices[] = {
+		DirectX::XMFLOAT3(0.0f, 0.5f, 0.5f),
+		DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f),
+		DirectX::XMFLOAT3(-0.5f, -0.5f, 0.5f)
+	};
+
+	if (FAILED(vertex_buffer.initialize(3, vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, device)))
 		return 0;
 
 	//------------------
@@ -105,7 +121,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 		}
 		else {
 			// レンダリングを行う
-			Render(device);
+			Render(device, vertex_shader, pixel_shader);
 		}
 	}
 
@@ -114,19 +130,36 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	//----------
 	vertex_shader.finalize();
 	pixel_shader.finalize();
+	vertex_buffer.finalize();
 	device.finalize();
 
 	// WM_QUITのwParamを返す
 	return msg.wParam;
 }
 
-void Render(const Device& device) {
+void Render(const Device& device, const VertexShader& vertex_shader, const PixelShader& pixel_shader) {
 	//------------------
 	// 描画バッファのクリア
 	//------------------
 	float ClearColor[4] = { 0.0f, 0.125f, 0.3f, 1.0f }; // クリアする色（RGBA）
-
 	device.getDeviceContext()->ClearRenderTargetView(device.getRenderTargetView(), ClearColor);
+
+	// 頂点シェーダのセット
+	device.getDeviceContext()->VSSetShader(
+		vertex_shader.get(), // セットする頂点シェーダ
+		nullptr, // シェーダで使用するインタフェース（使用しない場合はNULL）
+		0 // 使用するインタフェースの数
+	);
+
+	// ピクセルシェーダのセット
+	device.getDeviceContext()->PSSetShader(
+		pixel_shader.get(), // セットするピクセルシェーダ
+		nullptr, // シェーダで使用するインタフェース（使用しない場合はNULL）
+		0 // 使用するインタフェースの数
+	);
+
+	// 三角形の描画
+	device.getDeviceContext()->Draw(3, 0);
 
 	// 垂直同期の設定
 	device.getSwapChain()->Present(
