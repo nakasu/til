@@ -2,6 +2,7 @@
 #include <tchar.h>
 #include "window.h"
 #include "device.h"
+#include "vertex_shader.h"
 
 /**
 * 描画（レンダリング）を行う関数
@@ -18,8 +19,9 @@ void Render(const Device& device);
 * nCmdShow		ウィンドウの表示方法（サイズやアクティブかどうかなど）を指定する定数
 */
 int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow) {
-	Window window;
-	Device device;
+	Window			window;
+	Device			device;
+	VertexShader	vertex_shader;
 
 	//-------------------
 	// ウィンドウの初期化
@@ -31,6 +33,14 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	// デバイスの初期化
 	//-----------------
 	if (FAILED(device.initialize(window))) {
+		device.finalize();
+		return 0;
+	}
+
+	//---------------------
+	// 頂点シェーダの初期化
+	//---------------------
+	if (FAILED(vertex_shader.initialize("./Debug/vertex_shader.cso", device))) {
 		device.finalize();
 		return 0;
 	}
@@ -94,6 +104,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	//----------
 	// 終了処理
 	//----------
+	vertex_shader.finalize();
 	device.finalize();
 
 	// WM_QUITのwParamを返す

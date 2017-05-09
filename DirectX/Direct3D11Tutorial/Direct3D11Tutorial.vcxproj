@@ -146,11 +146,21 @@
   <ItemGroup>
     <ClCompile Include="src\device.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\vertex_shader.cpp" />
     <ClCompile Include="src\window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\device.h" />
+    <ClInclude Include="include\vertex_shader.h" />
     <ClInclude Include="include\window.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="hlsl\vertex_shader.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+    </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

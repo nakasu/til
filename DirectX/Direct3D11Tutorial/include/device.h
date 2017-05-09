@@ -34,6 +34,11 @@ public:
 	void finalize();
 
 	/**
+	* デバイスの取得
+	*/
+	ID3D11Device* getDevice() const { return pd3dDevice; };
+
+	/**
 	* デバイスコンテキストの取得
 	*/
 	ID3D11DeviceContext* getDeviceContext() const { return pImmediateContext; };
