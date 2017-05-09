@@ -3,6 +3,7 @@
 #include "window.h"
 #include "device.h"
 #include "vertex_shader.h"
+#include "pixel_shader.h"
 
 /**
 * 描画（レンダリング）を行う関数
@@ -22,6 +23,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	Window			window;
 	Device			device;
 	VertexShader	vertex_shader;
+	PixelShader		pixel_shader;
 
 	//-------------------
 	// ウィンドウの初期化
@@ -44,6 +46,12 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 		device.finalize();
 		return 0;
 	}
+
+	//-------------------------
+	// ピクセルシェーダの初期化
+	//-------------------------
+	if (FAILED(pixel_shader.initialize("./Debug/pixel_shader.cso", device)))
+		return 0;
 
 	//------------------
 	// メッセージループ
@@ -105,6 +113,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	// 終了処理
 	//----------
 	vertex_shader.finalize();
+	pixel_shader.finalize();
 	device.finalize();
 
 	// WM_QUITのwParamを返す

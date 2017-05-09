@@ -146,15 +146,23 @@
   <ItemGroup>
     <ClCompile Include="src\device.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\pixel_shader.cpp" />
     <ClCompile Include="src\vertex_shader.cpp" />
     <ClCompile Include="src\window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\device.h" />
+    <ClInclude Include="include\pixel_shader.h" />
     <ClInclude Include="include\vertex_shader.h" />
     <ClInclude Include="include\window.h" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="hlsl\pixel_shader.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
     <FxCompile Include="hlsl\vertex_shader.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
