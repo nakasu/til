@@ -3,13 +3,13 @@
 #include <DirectXMath.h>
 #include "device.h"
 
-HRESULT VertexBuffer::initialize(UINT capacity, DirectX::XMFLOAT3* vertices, D3D11_PRIMITIVE_TOPOLOGY topology,const Device& device) {
+HRESULT VertexBuffer::initialize(UINT capacity, VertexBuffer::SimpleVertex* vertices, D3D11_PRIMITIVE_TOPOLOGY topology,const Device& device) {
 	//--------------------
 	// 頂点バッファの定義
 	//--------------------
 	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));
-	bd.ByteWidth = sizeof(DirectX::XMFLOAT3) * capacity; // バッファのサイズ（バイト単位）
+	bd.ByteWidth = sizeof(VertexBuffer::SimpleVertex) * capacity; // バッファのサイズ（バイト単位）
 	bd.Usage = D3D11_USAGE_DEFAULT; // バッファの使用法（D3D11_USAGE_DEFAULTはGPUによる読み書きができるバッファ）
 	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER; // バッファを描画パイプラインにバインドする方法
 											 // D3D11_BIND_VERTEX_BUFFERならば頂点バッファとして入力アセンブラにバインドする
@@ -28,7 +28,7 @@ HRESULT VertexBuffer::initialize(UINT capacity, DirectX::XMFLOAT3* vertices, D3D
 	//-------------------
 	// 頂点バッファの登録
 	//-------------------
-	UINT stride = sizeof(DirectX::XMFLOAT3);
+	UINT stride = sizeof(VertexBuffer::SimpleVertex);
 	UINT offset = 0;
 	device.getDeviceContext()->IASetVertexBuffers(
 		0, // バッファをバインドする入力スロット番号

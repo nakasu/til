@@ -10,6 +10,14 @@ class Device;
 */
 class VertexBuffer {
 public:
+	/**
+	* 1つの頂点データを表す構造体
+	*/
+	struct SimpleVertex {
+		DirectX::XMFLOAT3 pos; // 座標
+		DirectX::XMFLOAT4 color; // 色
+	};
+
 	// コンストラクタ
 	VertexBuffer() = default;
 	VertexBuffer(const VertexBuffer&) = default;
@@ -24,13 +32,13 @@ public:
 
 	/**
 	* 頂点バッファの初期化関数
-
-	* capacity	頂点バッファの容量（XMFLOAT3型の個数で指定）
+	*
+	* capacity	頂点バッファの容量（登録する頂点の個数で指定）
 	* vertices	頂点バッファに格納するデータ
 	* topology	頂点バッファ内のデータの解釈方法
 	* device	頂点バッファを登録するデバイス
 	*/
-	HRESULT initialize(UINT capacity, DirectX::XMFLOAT3* vertices, D3D11_PRIMITIVE_TOPOLOGY topology, const Device& device);
+	HRESULT initialize(UINT capacity, SimpleVertex* vertices, D3D11_PRIMITIVE_TOPOLOGY topology, const Device& device);
 
 	/**
 	* 頂点バッファの終了処理

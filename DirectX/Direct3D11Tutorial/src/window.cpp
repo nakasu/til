@@ -85,3 +85,9 @@ UINT Window::getHeight() const {
 	GetClientRect(hWnd, &rc);
 	return rc.bottom - rc.top;
 }
+
+FLOAT Window::getAspectRatio() const {
+	RECT rc;
+	GetClientRect(hWnd, &rc);
+	return (float)(rc.right - rc.left) / (float)(rc.bottom - rc.top);
+}

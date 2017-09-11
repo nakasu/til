@@ -38,6 +38,11 @@ public:
 	*/
 	UINT getHeight() const;
 
+	/**
+	* クライアント領域のアスペクト比を取得
+	*/
+	FLOAT getAspectRatio() const;
+
 private:
 	/**
 	* ウィンドウプロシージャ

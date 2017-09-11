@@ -5,15 +5,20 @@
 #include "vertex_shader.h"
 #include "pixel_shader.h"
 #include "vertex_buffer.h"
+#include "index_buffer.h"
+#include "constant_buffer.h"
+#include "trans_matrixes.h"
 
 /**
 * 描画（レンダリング）を行う関数
 *
-* device		描画に使用するデバイス
-* vertex_shader	使用する頂点シェーダ
-* pixel_shader	使用するピクセルシェーダ
+* device			描画に使用するデバイス
+* vertex_shader		使用する頂点シェーダ
+* pixel_shader		使用するピクセルシェーダ
+* trans_matrixes	各種座標変換行列（ワールド変換行列等）
+* constant_buffer	定数バッファ
 */
-void Render(const Device& device, const VertexShader& vertex_shader, const PixelShader& pixel_shader);
+void Render(const Device& device, const VertexShader& vertex_shader, const PixelShader& pixel_shader, const TransMatrixes& trans_matrixes, ID3D11Buffer* constant_buffer);
 
 /**
 * hInstance		インスタンスハンドル（プログラムを識別するためのハンドル）
@@ -28,6 +33,9 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	VertexShader	vertex_shader;
 	PixelShader		pixel_shader;
 	VertexBuffer	vertex_buffer;
+	IndexBuffer		index_buffer;
+	ConstantBuffer	constant_buffer;
+	TransMatrixes	trans_matrixes;
 
 	//-------------------
 	// ウィンドウの初期化
@@ -47,6 +55,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	// 頂点シェーダの初期化
 	//---------------------
 	if (FAILED(vertex_shader.initialize("./Debug/vertex_shader.cso", device))) {
+		vertex_shader.finalize();
 		device.finalize();
 		return 0;
 	}
@@ -54,20 +63,92 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	//-------------------------
 	// ピクセルシェーダの初期化
 	//-------------------------
-	if (FAILED(pixel_shader.initialize("./Debug/pixel_shader.cso", device)))
+	if (FAILED(pixel_shader.initialize("./Debug/pixel_shader.cso", device))) {
+		pixel_shader.finalize();
+		vertex_shader.finalize();
+		device.finalize();
 		return 0;
+	}
 
 	//---------------------
 	// 頂点バッファの初期化
 	//---------------------
-	DirectX::XMFLOAT3 vertices[] = {
-		DirectX::XMFLOAT3(0.0f, 0.5f, 0.5f),
-		DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f),
-		DirectX::XMFLOAT3(-0.5f, -0.5f, 0.5f)
+	VertexBuffer::SimpleVertex vertices[] = {
+		{ DirectX::XMFLOAT3(-1.0f, 1.0f, -1.0f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) },
+		{ DirectX::XMFLOAT3(1.0f, 1.0f, -1.0f), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+		{ DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f), DirectX::XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f) },
+		{ DirectX::XMFLOAT3(-1.0f, 1.0f, 1.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
+		{ DirectX::XMFLOAT3(-1.0f, -1.0f, -1.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f) },
+		{ DirectX::XMFLOAT3(1.0f, -1.0f, -1.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) },
+		{ DirectX::XMFLOAT3(1.0f, -1.0f, 1.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f) },
+		{ DirectX::XMFLOAT3(-1.0f, -1.0f, 1.0f), DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) },
 	};
 
-	if (FAILED(vertex_buffer.initialize(3, vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, device)))
+	if (FAILED(vertex_buffer.initialize(ARRAYSIZE(vertices), vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, device))) {
+		vertex_buffer.finalize();
+		pixel_shader.finalize();
+		vertex_shader.finalize();
+		device.finalize();
 		return 0;
+	}
+
+	//---------------------------
+	// インデックスバッファの初期化
+	//---------------------------
+	WORD indices[] = {
+		3,1,0,
+		2,1,3, // 1枚目
+
+		0,5,4,
+		1,5,0, // 2枚目
+
+		3,4,7,
+		0,4,3, // 3枚目
+
+		1,6,5,
+		2,6,1, // 4枚目
+
+		2,7,6,
+		3,7,2, // 5枚目
+
+		6,4,5,
+		7,4,6, // 6枚目
+	};
+
+	if (FAILED(index_buffer.initialize(ARRAYSIZE(indices), indices, device))) {
+		index_buffer.finalize();
+		vertex_buffer.finalize();
+		pixel_shader.finalize();
+		vertex_shader.finalize();
+		device.finalize();
+		return 0;
+	}
+
+	//--------------------
+	// 定数バッファの初期化
+	//--------------------
+	if (FAILED(constant_buffer.initialize(sizeof(DirectX::XMMATRIX) * 3, device))) {
+		constant_buffer.finalize();
+		index_buffer.finalize();
+		vertex_buffer.finalize();
+		pixel_shader.finalize();
+		vertex_shader.finalize();
+		device.finalize();
+		return 0;
+	}
+
+	//----------------------
+	// 各種座標変換行列の初期化
+	//----------------------
+	if (FAILED(trans_matrixes.initialize(window))) {
+		vertex_shader.finalize();
+		pixel_shader.finalize();
+		vertex_buffer.finalize();
+		index_buffer.finalize();
+		constant_buffer.finalize();
+		device.finalize();
+		return 0;
+	}
 
 	//------------------
 	// メッセージループ
@@ -108,7 +189,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 			&msg, // メッセージの格納先
 			nullptr, // メッセージを受け取るウィンドウのハンドル（アプリケーションで表示している全てのウィンドウから受け取る場合はNULL）
 			0, // 受け取るメッセージの最小値（0ならばフィルタリングしない）
-			0, // 受け取るメッセージの最大値（０ならばフィルタリングしない）
+			0, // 受け取るメッセージの最大値（0ならばフィルタリングしない）
 			PM_REMOVE // 受け取ったメッセージをキューから削除するか（もう一度メッセージを受け取りたい場合のみ削除しない）
 		)
 			) {
@@ -121,7 +202,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 		}
 		else {
 			// レンダリングを行う
-			Render(device, vertex_shader, pixel_shader);
+			Render(device, vertex_shader, pixel_shader, trans_matrixes, constant_buffer.getConstantBuffer());
 		}
 	}
 
@@ -131,24 +212,64 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	vertex_shader.finalize();
 	pixel_shader.finalize();
 	vertex_buffer.finalize();
+	index_buffer.finalize();
+	constant_buffer.finalize();
 	device.finalize();
 
 	// WM_QUITのwParamを返す
 	return msg.wParam;
 }
 
-void Render(const Device& device, const VertexShader& vertex_shader, const PixelShader& pixel_shader) {
+void Render(const Device& device, const VertexShader& vertex_shader, const PixelShader& pixel_shader, const TransMatrixes& trans_matrixes, ID3D11Buffer* constant_buffer) {
+	//---------------------------------------
+	// 時間経過による座標変換用のパラメータtを更新
+	//---------------------------------------
+	static float t = 0.0f;
+	static ULONGLONG start_time = GetTickCount64(); // GetTickCount64()はシステム起動時からの経過ミリ秒を返す
+	ULONGLONG current_time = GetTickCount64();
+	t = (current_time - start_time) / 1000.0f;
+
 	//------------------
 	// 描画バッファのクリア
 	//------------------
 	float ClearColor[4] = { 0.0f, 0.125f, 0.3f, 1.0f }; // クリアする色（RGBA）
 	device.getDeviceContext()->ClearRenderTargetView(device.getRenderTargetView(), ClearColor);
 
+	//---------------------
+	// ワールド変換行列の更新
+	//---------------------
+	DirectX::XMMATRIX world_matrix = trans_matrixes.getWorldMatrix();
+	world_matrix = DirectX::XMMatrixRotationY(t);
+
+	//-----------------------
+	// シェーダへ渡す変数の更新
+	//-----------------------
+	DirectX::XMMATRIX cb[3];
+	cb[0] = DirectX::XMMatrixTranspose(world_matrix); // ワールド変換行列の転置行列
+	cb[1] = DirectX::XMMatrixTranspose(trans_matrixes.getViewMatrix()); // ビュー変換行列の転置行列
+	cb[2] = DirectX::XMMatrixTranspose(trans_matrixes.getProjectionMatrix()); // プロジェクション変換行列の転置行列
+	// 定数バッファを更新
+	device.getDeviceContext()->UpdateSubresource(
+		constant_buffer, // データのコピー先ポインタ
+		0, // サブリソースのインデックス
+		nullptr, // コピーするバイト数（定数バッファの場合NULL）
+		&cb, // コピー元データのポインタ
+		0, // コピー元データの1行のサイズ
+		0 // コピー元データの1深度スライスのサイズ
+	);
+
 	// 頂点シェーダのセット
 	device.getDeviceContext()->VSSetShader(
 		vertex_shader.get(), // セットする頂点シェーダ
 		nullptr, // シェーダで使用するインタフェース（使用しない場合はNULL）
 		0 // 使用するインタフェースの数
+	);
+
+	// 頂点シェーダに定数バッファをセット
+	device.getDeviceContext()->VSSetConstantBuffers(
+		0, // 定数バッファをセットする位置
+		1, // セットする定数バッファの数
+		&constant_buffer // セットする定数バッファのアドレス
 	);
 
 	// ピクセルシェーダのセット
@@ -158,8 +279,14 @@ void Render(const Device& device, const VertexShader& vertex_shader, const Pixel
 		0 // 使用するインタフェースの数
 	);
 
-	// 三角形の描画
-	device.getDeviceContext()->Draw(3, 0);
+	//-------------
+	//立方体の描画
+	//-------------
+	device.getDeviceContext()->DrawIndexed(
+		36, // 描画するインデックスの数
+		0, // インデックスバッファから読み取る最初の場所
+		0 // 各インデックス値に加算する値
+	);
 
 	// 垂直同期の設定
 	device.getSwapChain()->Present(

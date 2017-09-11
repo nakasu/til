@@ -144,16 +144,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\constant_buffer.cpp" />
     <ClCompile Include="src\device.cpp" />
+    <ClCompile Include="src\index_buffer.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\pixel_shader.cpp" />
+    <ClCompile Include="src\trans_matrixes.cpp" />
     <ClCompile Include="src\vertex_buffer.cpp" />
     <ClCompile Include="src\vertex_shader.cpp" />
     <ClCompile Include="src\window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\constant_buffer.h" />
     <ClInclude Include="include\device.h" />
+    <ClInclude Include="include\index_buffer.h" />
     <ClInclude Include="include\pixel_shader.h" />
+    <ClInclude Include="include\trans_matrixes.h" />
     <ClInclude Include="include\vertex_buffer.h" />
     <ClInclude Include="include\vertex_shader.h" />
     <ClInclude Include="include\window.h" />
