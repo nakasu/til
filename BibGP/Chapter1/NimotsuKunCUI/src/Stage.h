@@ -12,10 +12,9 @@ public:
 	// コンストラクタ
 	/**
 	* init_data	文字列で表した初期ステージ構成
-	* width		ステージ幅
-	* height	ステージ高
 	*/
-	Stage(const std::string& init_data, size_t width, size_t height);
+	Stage(const std::string& init_data);
+	
 	Stage(const Stage&) = delete;
 	Stage(Stage&&) = delete;
 
@@ -66,5 +65,5 @@ private:
 	std::string data_; // ステージ構成
 	size_t width_; // ステージ幅
 	size_t height_; // ステージ高
-	std::vector<Cargo> cargoes; // ステージ中の荷物
+	std::vector<Cargo> cargoes_; // ステージ中の荷物
 };

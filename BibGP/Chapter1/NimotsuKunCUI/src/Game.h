@@ -36,7 +36,7 @@ public:
 	/**
 	* クリア判定
 	*/
-	bool isClear() { return stage->isClear(); };
+	bool isClear() { return stage_->isClear(); };
 
 	/**
 	* ユーザからの入力を取得
@@ -54,11 +54,17 @@ public:
 	void draw();
 
 private:
-	// 定数
-	static constexpr size_t STAGE_WIDTH = 8;
-	static constexpr size_t STAGE_HEIGHT = 5;
+	// 関数
+	/**
+	* ステージデータファイルからデータを読み込む
+	*
+	* file_name		ステージデータファイル名
+	* stage_data	読み込んだステージデータの保存先
+	*/
+	void loadStageData(const std::string& file_name, std::string& stage_data);
 
-	std::unique_ptr<Stage>	stage;
-	std::unique_ptr<Player>	player;
-	char	input;
+	// メンバ
+	std::unique_ptr<Stage>	stage_;
+	std::unique_ptr<Player>	player_;
+	char	input_;
 };
