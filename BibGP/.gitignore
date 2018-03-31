@@ -1,6 +1,9 @@
 .vs/
 Debug/
+Release/
 
 *.db
 *.opendb
 *.vcxproj.user
+*.idb
+*.pdb
