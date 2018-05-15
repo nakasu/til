@@ -5,7 +5,8 @@ HRESULT TransMatrixes::initialize(const Window& window) {
 	//------------------------------------
 	// ワールド変換行列の初期化
 	//------------------------------------
-	world_matrix = DirectX::XMMatrixIdentity(); // 単位行列で初期化
+	world_matrix1 = DirectX::XMMatrixIdentity(); // 単位行列で初期化
+	world_matrix2 = DirectX::XMMatrixIdentity(); // 単位行列で初期化
 
 	//---------------------
 	// ビュー変換行列の初期化

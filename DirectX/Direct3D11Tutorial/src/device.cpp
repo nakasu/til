@@ -15,7 +15,7 @@ HRESULT Device::initialize(const Window& window) {
 	// 使用するドライバの種類を指定
 	//-----------------------------
 	D3D_DRIVER_TYPE driverTypes[] = {
-		D3D_DRIVER_TYPE_HARDWARE
+		D3D_DRIVER_TYPE_HARDWARE,
 	};
 	UINT numDriverTypes = ARRAYSIZE(driverTypes);
 
@@ -23,7 +23,7 @@ HRESULT Device::initialize(const Window& window) {
 	// 使用するDirectXの機能レベルを指定
 	//---------------------------------
 	D3D_FEATURE_LEVEL featureLevels[] = {
-		D3D_FEATURE_LEVEL_11_0
+		D3D_FEATURE_LEVEL_11_0,
 	};
 	UINT numFeatureLevels = ARRAYSIZE(featureLevels);
 
@@ -110,12 +110,63 @@ HRESULT Device::initialize(const Window& window) {
 		return hr;
 
 	//--------------------------------------------------------
-	// レンダリングターゲットビューをデバイスコンテキストに登録
+	// 深度ステンシルバッファ（Zバッファ+ステンシルバッファ）の作成
 	//--------------------------------------------------------
+	ID3D11Texture2D* pDepthStencil; // 深度ステンシルバッファ
+
+	D3D11_TEXTURE2D_DESC descDepth; // 深度ステンシルバッファ定義構造体
+	ZeroMemory(&descDepth, sizeof(descDepth));
+	descDepth.Width = window.getWidth(); // バッファの幅
+	descDepth.Height = window.getHeight(); // バッファの高さ
+	descDepth.MipLevels = 1; // バッファ内のミップマップレベルの最大数（ミップマップの枚数）
+							 // 0にすると1*1までミップマップを作成
+							 // 深度ステンシルバッファではミップマップは必要ないのでレベル1
+	descDepth.ArraySize = 1; // バッファの枚数
+	descDepth.Format = DXGI_FORMAT_D24_UNORM_S8_UINT; // バッファの各ピクセルのフォーマット（型情報）
+													  // DXGI_FORMAT_D24_UNORM_S8_UINT 深度チャンネルに24bit，ステンシルチャンネルに8bitの32bitの符号なし整数フォーマット
+	descDepth.SampleDesc.Count = 1; // アンチエイリアス（マルチサンプリング）に用いるピクセル数（アンチエイリアスを使わない場合は1）
+	descDepth.SampleDesc.Quality = 0; // アンチエイリアス（マルチサンプリング）の品質レベル（アンチエイリアスを使わない場合は0）
+	descDepth.Usage = D3D11_USAGE_DEFAULT; // バッファの読み書き方法の指定
+										   // D3D11_USAGE_DEFAULT GPUによる読み書きが可能
+	descDepth.BindFlags = D3D11_BIND_DEPTH_STENCIL; // バッファをパイプラインにバインドする方法
+													// D3D11_BIND_DEPTH_STENCIL 出力結合ステージに深度ステンシルターゲットとしてバインド
+	descDepth.CPUAccessFlags = 0; // 許可するCPUアクセスの種類を指定するフラグ（CPUアクセスが不要な場合は0）
+	descDepth.MiscFlags = 0; // 一般的でない細かなオプションを指定するフラグ（使用しない場合は0）
+
+	hr = pd3dDevice->CreateTexture2D(
+		&descDepth, // 登録する深度ステンシルバッファ
+		nullptr, // サブリソース配列へのポインタ（サブリソースを使用しない場合はNULL）
+		&pDepthStencil // 作成した深度ステンシルバッファの格納先
+	);
+	if (FAILED(hr))
+		return hr;
+
+	//--------------------------------------------------------------------------------------
+	// 作成した深度ステンシルバッファをデバイスに登録して深度ステンシルビューを作成
+	//
+	// 深度ステンシルビューはバッファと描画パイプラインを結びつける役割を持つ 
+	//--------------------------------------------------------------------------------------
+	D3D11_DEPTH_STENCIL_VIEW_DESC descDSV; // 深度ステンシルビュー定義構造体
+	ZeroMemory(&descDSV, sizeof(descDSV));
+	descDSV.Format = descDepth.Format; // ビューの各ピクセルのフォーマット（型情報）
+	descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D; // ビューに用いるリソースのタイプ
+	descDSV.Texture2D.MipSlice = 0; // 最初に使用するミップマップレベルのインデックス（ミップマップを使用しないので0）
+
+	hr = pd3dDevice->CreateDepthStencilView(
+		pDepthStencil, // 深度ステンシルビューに使用するバッファへのポインタ
+		&descDSV, // 作成する深度ステンシルビューの定義
+		&pDepthStencilView // 作成した深度ステンシルビューの格納先
+	);
+	if (FAILED(hr))
+		return hr;
+
+	//-----------------------------------------------------------------------
+	// レンダリングターゲットビューと深度ステンシルビューをデバイスコンテキストに登録
+	//-----------------------------------------------------------------------
 	pImmediateContext->OMSetRenderTargets(
 		1, // 登録するレンダリングターゲットビュー数
 		&pRenderTargetView, // 登録するレンダリングターゲットビュー
-		nullptr // Zバッファビュー（Zバッファを使用しない場合はNULL）
+		pDepthStencilView // 登録する深度ステンシルビュー
 	);
 
 	//--------------------
@@ -145,6 +196,8 @@ void Device::finalize() {
 	//----------------
 	// リソースの開放
 	//----------------
+	if (pDepthStencilView)
+		pDepthStencilView->Release();
 	if (pRenderTargetView)
 		pRenderTargetView->Release();
 	if (pSwapChain)

@@ -229,31 +229,52 @@ void Render(const Device& device, const VertexShader& vertex_shader, const Pixel
 	ULONGLONG current_time = GetTickCount64();
 	t = (current_time - start_time) / 1000.0f;
 
-	//------------------
+	//-------------------
 	// 描画バッファのクリア
-	//------------------
+	//-------------------
 	float ClearColor[4] = { 0.0f, 0.125f, 0.3f, 1.0f }; // クリアする色（RGBA）
 	device.getDeviceContext()->ClearRenderTargetView(device.getRenderTargetView(), ClearColor);
+
+	//-----------------------------
+	// 深度ステンシルビューのクリア
+	//-----------------------------
+	device.getDeviceContext()->ClearDepthStencilView(
+		device.getDepthStencilView(), // クリアする深度ステンシルビュー
+		D3D11_CLEAR_DEPTH, // クリアする対象バッファ 論理和で複数指定可能
+						   // D3D11_CLEAR_DEPTH 深度バッファをクリア
+		1.0f, // 深度バッファをこの値でクリア
+		0 // ステンシルバッファをこの値でクリア（クリア対象にステンシルバッファが含まれていないため無視される）
+	);
 
 	//---------------------
 	// ワールド変換行列の更新
 	//---------------------
-	DirectX::XMMATRIX world_matrix = trans_matrixes.getWorldMatrix();
-	world_matrix = DirectX::XMMatrixRotationY(t);
+	DirectX::XMMATRIX world_matrix1 = trans_matrixes.getWorldMatrix1();
+	DirectX::XMMATRIX world_matrix2 = trans_matrixes.getWorldMatrix2();
+	
+	world_matrix1 = DirectX::XMMatrixRotationY(t); // Y軸を中心にt（ラジアン）だけ回転
 
-	//-----------------------
-	// シェーダへ渡す変数の更新
-	//-----------------------
-	DirectX::XMMATRIX cb[3];
-	cb[0] = DirectX::XMMatrixTranspose(world_matrix); // ワールド変換行列の転置行列
-	cb[1] = DirectX::XMMatrixTranspose(trans_matrixes.getViewMatrix()); // ビュー変換行列の転置行列
-	cb[2] = DirectX::XMMatrixTranspose(trans_matrixes.getProjectionMatrix()); // プロジェクション変換行列の転置行列
+	DirectX::XMMATRIX spin = DirectX::XMMatrixRotationZ(-t); // Z軸中心の回転行列
+	DirectX::XMMATRIX orbit = DirectX::XMMatrixRotationY(-t * 2.0f); // Y軸中心の回転行列
+	DirectX::XMMATRIX translate = DirectX::XMMatrixTranslation(-4.0f, 0.0f, 0.0f); // 平行移動行列
+	DirectX::XMMATRIX scale = DirectX::XMMatrixScaling(0.3f, 0.3f, 0.3f); // スケーリング行列
+
+	world_matrix2 = scale * spin * translate * orbit;
+
+	//---------------------------------------
+	// 1つ目の立方体用のシェーダへ渡す変数の更新
+	//---------------------------------------
+	DirectX::XMMATRIX cb1[3];
+	cb1[0] = DirectX::XMMatrixTranspose(world_matrix1); // ワールド変換行列の転置行列
+	cb1[1] = DirectX::XMMatrixTranspose(trans_matrixes.getViewMatrix()); // ビュー変換行列の転置行列
+	cb1[2] = DirectX::XMMatrixTranspose(trans_matrixes.getProjectionMatrix()); // プロジェクション変換行列の転置行列
+
 	// 定数バッファを更新
 	device.getDeviceContext()->UpdateSubresource(
 		constant_buffer, // データのコピー先ポインタ
 		0, // サブリソースのインデックス
 		nullptr, // コピーするバイト数（定数バッファの場合NULL）
-		&cb, // コピー元データのポインタ
+		&cb1, // コピー元データのポインタ
 		0, // コピー元データの1行のサイズ
 		0 // コピー元データの1深度スライスのサイズ
 	);
@@ -279,14 +300,28 @@ void Render(const Device& device, const VertexShader& vertex_shader, const Pixel
 		0 // 使用するインタフェースの数
 	);
 
-	//-------------
-	//立方体の描画
-	//-------------
+	//-------------------
+	// 1つ目の立方体の描画
+	//-------------------
 	device.getDeviceContext()->DrawIndexed(
 		36, // 描画するインデックスの数
 		0, // インデックスバッファから読み取る最初の場所
 		0 // 各インデックス値に加算する値
 	);
+
+	//---------------------------------------
+	// 2つ目の立方体用のシェーダへ渡す変数の更新
+	//---------------------------------------
+	DirectX::XMMATRIX cb2[3];
+	cb2[0] = DirectX::XMMatrixTranspose(world_matrix2); // ワールド変換行列の転置行列
+	cb2[1] = DirectX::XMMatrixTranspose(trans_matrixes.getViewMatrix()); // ビュー変換行列の転置行列
+	cb2[2] = DirectX::XMMatrixTranspose(trans_matrixes.getProjectionMatrix()); // プロジェクション変換行列の転置行列
+
+	// 定数バッファを更新
+	device.getDeviceContext()->UpdateSubresource(constant_buffer, 0, nullptr, &cb2, 0, 0);
+
+	// 2つ目の立方体の描画
+	device.getDeviceContext()->DrawIndexed(36, 0, 0);
 
 	// 垂直同期の設定
 	device.getSwapChain()->Present(

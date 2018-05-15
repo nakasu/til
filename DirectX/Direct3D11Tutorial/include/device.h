@@ -49,6 +49,11 @@ public:
 	ID3D11RenderTargetView* getRenderTargetView() const { return pRenderTargetView; };
 
 	/**
+	* 深度ステンシルビューの取得
+	*/
+	ID3D11DepthStencilView* getDepthStencilView() const { return pDepthStencilView; };
+
+	/**
 	* スワップチェインの取得
 	*/
 	IDXGISwapChain* getSwapChain() const { return pSwapChain; };
@@ -59,5 +64,6 @@ private:
 	ID3D11DeviceContext*	pImmediateContext; // 作成したデバイスコンテキスト（描画を行うもの）の格納先
 											   // 即時コンテキスト（詰まれたコマンドが即時実行される）（c.f. 遅延コンテキスト）
 	IDXGISwapChain*			pSwapChain; // 作成したスワップチェインの格納先
-	ID3D11RenderTargetView*	pRenderTargetView; // 作成したレンダリングターゲットビュー格納先
+	ID3D11RenderTargetView*	pRenderTargetView; // 作成したレンダリングターゲットビューの格納先
+	ID3D11DepthStencilView* pDepthStencilView; // 作成した深度ステンシルビューの格納先
 };
