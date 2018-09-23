@@ -20,17 +20,11 @@ struct VS_OUTPUT
 	float3 norm : TEXCOORD0;
 };
 
-//--------------------------
-// ピクセルシェーダのmain関数
-//--------------------------
+//-------------------------------
+// 光源用ピクセルシェーダのmain関数
+//-------------------------------
 float4 main(VS_OUTPUT input) : SV_TARGET
 {
-	float4 final_color = 0.0f;
-
-	for (int i = 0; i < 2; ++i) {
-		final_color += saturate(dot((float3)light_dirs[i], input.norm) * light_colors[i]);
-	}
-	final_color.a = 1.0f;
-
-	return final_color;
+	return output_color;
+	//return float4(1.0f, 0.0f, 0.0f, 1.0f);
 }

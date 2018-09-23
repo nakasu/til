@@ -36,7 +36,7 @@ HRESULT Window::initialize(HINSTANCE hInstance) {
 
 	hWnd = CreateWindow(
 		TEXT("TutorialWindowClass"), // 使用するウィンドウクラス名
-		TEXT("Direct3D 11 Tutorial 01"), // ウィンドウタイトル（タイトルバーに表示する文字列）
+		TEXT("Direct3D 11 Tutorial"), // ウィンドウタイトル（タイトルバーに表示する文字列）
 		WS_OVERLAPPEDWINDOW, // ウィンドウスタイル
 		CW_USEDEFAULT, // ウィンドウ左上X座標（適当な値で構わないときはCW_USEDEFAULT）
 		CW_USEDEFAULT, // ウィンドウ左上Y座標（適当な値で構わないときはCW_USEDEFAULT）

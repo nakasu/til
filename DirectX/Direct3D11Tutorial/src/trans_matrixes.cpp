@@ -5,13 +5,12 @@ HRESULT TransMatrixes::initialize(const Window& window) {
 	//------------------------------------
 	// ワールド変換行列の初期化
 	//------------------------------------
-	world_matrix1 = DirectX::XMMatrixIdentity(); // 単位行列で初期化
-	world_matrix2 = DirectX::XMMatrixIdentity(); // 単位行列で初期化
+	world_matrix = DirectX::XMMatrixIdentity(); // 単位行列で初期化
 
 	//---------------------
 	// ビュー変換行列の初期化
 	//---------------------
-	DirectX::XMVECTOR eye = DirectX::XMVectorSet(0.0f, 1.0f, -5.0f, 0.0); // カメラ座標
+	DirectX::XMVECTOR eye = DirectX::XMVectorSet(0.0f, 4.0f, -10.0f, 0.0); // カメラ座標
 	DirectX::XMVECTOR at = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f); // 焦点座標
 	DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f); // カメラの上方向
 	view_matrix = DirectX::XMMatrixLookAtLH(eye, at, up); // ビュー変換行列を生成（LHは左手座標系で生成することを表す）

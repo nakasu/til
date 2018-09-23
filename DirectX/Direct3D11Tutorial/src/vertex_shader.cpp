@@ -51,12 +51,12 @@ HRESULT VertexShader::initialize(const std::string& file_name, const Device& dev
 			0 // 要素ごとに描画するインスタンス数（頂点単位のデータならば0）
 		},
 		{
-			"COLOR", // 入力レイアウトの識別子（セマンティクス）
+			"NORMAL", // 入力レイアウトの識別子（セマンティクス）
 			0, // 入力レイアウトのインデックス（1つしかなければ0）
-			DXGI_FORMAT_R32G32B32A32_FLOAT, // 入力情報のフォーマット（型情報）
+			DXGI_FORMAT_R32G32B32_FLOAT, // 入力情報のフォーマット（型情報）
 			0, // 入力アセンブラを識別する整数値
 			12, // 要素間のオフセット（バイト単位）
-				// 色情報の前に座標情報として4バイトのfloat型が3つあるためオフセットは12
+				// 法線情報の前に座標情報（POSITION）として4バイトのfloat型が3つあるためオフセットは12
 			D3D11_INPUT_PER_VERTEX_DATA, // 入力データクラスの情報（D3D11_INPUT_PER_VERTEX_DATAならば頂点単位のデータ）
 			0 // 要素ごとに描画するインスタンス数（頂点単位のデータならば0）
 		}

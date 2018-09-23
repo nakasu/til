@@ -10,6 +10,18 @@
 #include "trans_matrixes.h"
 
 /**
+* シェーダに渡す定数群を定義する構造体
+*/
+struct Constants {
+	DirectX::XMMATRIX world_matrix;
+	DirectX::XMMATRIX view_matrix;
+	DirectX::XMMATRIX projection_matrix;
+	DirectX::XMFLOAT4 light_dirs[2];
+	DirectX::XMFLOAT4 light_colors[2];
+	DirectX::XMFLOAT4 output_color;
+};
+
+/**
 * 描画（レンダリング）を行う関数
 *
 * device			描画に使用するデバイス
@@ -18,7 +30,7 @@
 * trans_matrixes	各種座標変換行列（ワールド変換行列等）
 * constant_buffer	定数バッファ
 */
-void Render(const Device& device, const VertexShader& vertex_shader, const PixelShader& pixel_shader, const TransMatrixes& trans_matrixes, ID3D11Buffer* constant_buffer);
+void Render(const Device& device, const VertexShader& vertex_shader, const PixelShader& pixel_shader, const PixelShader& pixel_shader_solid, const TransMatrixes& trans_matrixes, ID3D11Buffer* constant_buffer);
 
 /**
 * hInstance		インスタンスハンドル（プログラムを識別するためのハンドル）
@@ -32,6 +44,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	Device			device;
 	VertexShader	vertex_shader;
 	PixelShader		pixel_shader;
+	PixelShader		pixel_shader_solid;
 	VertexBuffer	vertex_buffer;
 	IndexBuffer		index_buffer;
 	ConstantBuffer	constant_buffer;
@@ -70,18 +83,50 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 		return 0;
 	}
 
+	//--------------------------
+	// ピクセルシェーダー2の初期化
+	//--------------------------
+	if (FAILED(pixel_shader_solid.initialize("./Debug/pixel_shader_solid.cso", device))) {
+		pixel_shader_solid.finalize();
+		pixel_shader.finalize();
+		vertex_shader.finalize();
+		device.finalize();
+		return 0;
+	}
+
 	//---------------------
 	// 頂点バッファの初期化
 	//---------------------
 	VertexBuffer::SimpleVertex vertices[] = {
-		{ DirectX::XMFLOAT3(-1.0f, 1.0f, -1.0f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) },
-		{ DirectX::XMFLOAT3(1.0f, 1.0f, -1.0f), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-		{ DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f), DirectX::XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f) },
-		{ DirectX::XMFLOAT3(-1.0f, 1.0f, 1.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
-		{ DirectX::XMFLOAT3(-1.0f, -1.0f, -1.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f) },
-		{ DirectX::XMFLOAT3(1.0f, -1.0f, -1.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) },
-		{ DirectX::XMFLOAT3(1.0f, -1.0f, 1.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f) },
-		{ DirectX::XMFLOAT3(-1.0f, -1.0f, 1.0f), DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) },
+		{ DirectX::XMFLOAT3(-1.0f, 1.0f, -1.0f), DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f) },
+		{ DirectX::XMFLOAT3(1.0f, 1.0f, -1.0f), DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f) },
+		{ DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f), DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f) },
+		{ DirectX::XMFLOAT3(-1.0f, 1.0f, 1.0f), DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f) },
+
+		{ DirectX::XMFLOAT3(-1.0f, -1.0f, -1.0f), DirectX::XMFLOAT3(0.0f, -1.0f, 0.0f) },
+		{ DirectX::XMFLOAT3(1.0f, -1.0f, -1.0f), DirectX::XMFLOAT3(0.0f, -1.0f, 0.0f) },
+		{ DirectX::XMFLOAT3(1.0f, -1.0f, 1.0f), DirectX::XMFLOAT3(0.0f, -1.0f, 0.0f) },
+		{ DirectX::XMFLOAT3(-1.0f, -1.0f, 1.0f), DirectX::XMFLOAT3(0.0f, -1.0f, 0.0f) },
+
+		{ DirectX::XMFLOAT3(-1.0f, -1.0f, 1.0f), DirectX::XMFLOAT3(-1.0f, 0.0f, 0.0f) },
+		{ DirectX::XMFLOAT3(-1.0f, -1.0f, -1.0f), DirectX::XMFLOAT3(-1.0f, 0.0f, 0.0f) },
+		{ DirectX::XMFLOAT3(-1.0f, 1.0f, -1.0f), DirectX::XMFLOAT3(-1.0f, 0.0f, 0.0f) },
+		{ DirectX::XMFLOAT3(-1.0f, 1.0f, 1.0f), DirectX::XMFLOAT3(-1.0f, 0.0f, 0.0f) },
+
+		{ DirectX::XMFLOAT3(1.0f, -1.0f, 1.0f), DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f) },
+		{ DirectX::XMFLOAT3(1.0f, -1.0f, -1.0f), DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f) },
+		{ DirectX::XMFLOAT3(1.0f, 1.0f, -1.0f), DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f) },
+		{ DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f), DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f) },
+
+		{ DirectX::XMFLOAT3(-1.0f, -1.0f, -1.0f), DirectX::XMFLOAT3(0.0f, 0.0f, -1.0f) },
+		{ DirectX::XMFLOAT3(1.0f, -1.0f, -1.0f), DirectX::XMFLOAT3(0.0f, 0.0f, -1.0f) },
+		{ DirectX::XMFLOAT3(1.0f, 1.0f, -1.0f), DirectX::XMFLOAT3(0.0f, 0.0f, -1.0f) },
+		{ DirectX::XMFLOAT3(-1.0f, 1.0f, -1.0f), DirectX::XMFLOAT3(0.0f, 0.0f, -1.0f) },
+
+		{ DirectX::XMFLOAT3(-1.0f, -1.0f, 1.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f) },
+		{ DirectX::XMFLOAT3(1.0f, -1.0f, 1.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f) },
+		{ DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f), DirectX::XMFLOAT3(0.0, 0.0f, 1.0f) },
+		{ DirectX::XMFLOAT3(-1.0f, 1.0f, 1.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f) },
 	};
 
 	if (FAILED(vertex_buffer.initialize(ARRAYSIZE(vertices), vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, device))) {
@@ -99,20 +144,20 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 		3,1,0,
 		2,1,3, // 1枚目
 
-		0,5,4,
-		1,5,0, // 2枚目
-
-		3,4,7,
-		0,4,3, // 3枚目
-
-		1,6,5,
-		2,6,1, // 4枚目
-
-		2,7,6,
-		3,7,2, // 5枚目
-
 		6,4,5,
-		7,4,6, // 6枚目
+		7,4,6, // 2枚目
+
+		11,9,8,
+		10,9,11, // 3枚目
+
+		14,12,13,
+		15,12,14, // 4枚目
+
+		19,17,16,
+		18,17,19, // 5枚目
+
+		22,20,21,
+		23,20,22, // 6枚目
 	};
 
 	if (FAILED(index_buffer.initialize(ARRAYSIZE(indices), indices, device))) {
@@ -127,7 +172,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	//--------------------
 	// 定数バッファの初期化
 	//--------------------
-	if (FAILED(constant_buffer.initialize(sizeof(DirectX::XMMATRIX) * 3, device))) {
+	if (FAILED(constant_buffer.initialize(sizeof(Constants), device))) {
 		constant_buffer.finalize();
 		index_buffer.finalize();
 		vertex_buffer.finalize();
@@ -202,7 +247,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 		}
 		else {
 			// レンダリングを行う
-			Render(device, vertex_shader, pixel_shader, trans_matrixes, constant_buffer.getConstantBuffer());
+			Render(device, vertex_shader, pixel_shader, pixel_shader_solid, trans_matrixes, constant_buffer.getConstantBuffer());
 		}
 	}
 
@@ -220,7 +265,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	return msg.wParam;
 }
 
-void Render(const Device& device, const VertexShader& vertex_shader, const PixelShader& pixel_shader, const TransMatrixes& trans_matrixes, ID3D11Buffer* constant_buffer) {
+void Render(const Device& device, const VertexShader& vertex_shader, const PixelShader& pixel_shader, const PixelShader& pixel_shader_solid, const TransMatrixes& trans_matrixes, ID3D11Buffer* constant_buffer) {
 	//---------------------------------------
 	// 時間経過による座標変換用のパラメータtを更新
 	//---------------------------------------
@@ -249,32 +294,53 @@ void Render(const Device& device, const VertexShader& vertex_shader, const Pixel
 	//---------------------
 	// ワールド変換行列の更新
 	//---------------------
-	DirectX::XMMATRIX world_matrix1 = trans_matrixes.getWorldMatrix1();
-	DirectX::XMMATRIX world_matrix2 = trans_matrixes.getWorldMatrix2();
+	DirectX::XMMATRIX world_matrix = trans_matrixes.getWorldMatrix();
 	
-	world_matrix1 = DirectX::XMMatrixRotationY(t); // Y軸を中心にt（ラジアン）だけ回転
+	world_matrix = DirectX::XMMatrixRotationY(t); // Y軸を中心にt（ラジアン）だけ回転
 
-	DirectX::XMMATRIX spin = DirectX::XMMatrixRotationZ(-t); // Z軸中心の回転行列
-	DirectX::XMMATRIX orbit = DirectX::XMMatrixRotationY(-t * 2.0f); // Y軸中心の回転行列
-	DirectX::XMMATRIX translate = DirectX::XMMatrixTranslation(-4.0f, 0.0f, 0.0f); // 平行移動行列
-	DirectX::XMMATRIX scale = DirectX::XMMatrixScaling(0.3f, 0.3f, 0.3f); // スケーリング行列
+	//--------------------
+	// 光源パラメータの設定
+	//--------------------
+	DirectX::XMFLOAT4 light_dirs[2] = // 光源方向
+	{
+		DirectX::XMFLOAT4(-0.577f, 0.577f, -0.577f, 1.0f), // 光源1の方向
+		DirectX::XMFLOAT4(0.0f, 0.0f, -1.0f, 1.0f), // 光源2の方向
+	};
 
-	world_matrix2 = scale * spin * translate * orbit;
+	DirectX::XMFLOAT4 light_colors[2] = // 光源の色
+	{
+		DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f), // 光源1の色
+		DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), // 光源2の色
+	};
+
+	//---------------
+	// 光源2の座標変換
+	//---------------
+	DirectX::XMMATRIX rotate = DirectX::XMMatrixRotationY(-2.0f * t); // Y軸中心の回転行列
+	DirectX::XMVECTOR light_dir = DirectX::XMLoadFloat4(&light_dirs[1]); // ハードウェア上での演算用にアライメント等を行った状態のデータに変換
+	light_dir = DirectX::XMVector3Transform(light_dir, rotate); // 光源ベクトルの座標変換
+	DirectX::XMStoreFloat4(&light_dirs[1], light_dir); // 演算結果の書き戻し
 
 	//---------------------------------------
-	// 1つ目の立方体用のシェーダへ渡す変数の更新
+	// シェーダへ渡す変数の更新
 	//---------------------------------------
-	DirectX::XMMATRIX cb1[3];
-	cb1[0] = DirectX::XMMatrixTranspose(world_matrix1); // ワールド変換行列の転置行列
-	cb1[1] = DirectX::XMMatrixTranspose(trans_matrixes.getViewMatrix()); // ビュー変換行列の転置行列
-	cb1[2] = DirectX::XMMatrixTranspose(trans_matrixes.getProjectionMatrix()); // プロジェクション変換行列の転置行列
+	Constants cb;
+
+	cb.world_matrix = DirectX::XMMatrixTranspose(world_matrix); // ワールド変換行列の転置行列
+	cb.view_matrix = DirectX::XMMatrixTranspose(trans_matrixes.getViewMatrix()); // ビュー変換行列の転置行列
+	cb.projection_matrix = DirectX::XMMatrixTranspose(trans_matrixes.getProjectionMatrix()); // プロジェクション変換行列の転置行列
+	cb.light_dirs[0] = light_dirs[0]; // 光源1の方向ベクトル
+	cb.light_dirs[1] = light_dirs[1]; // 光源2の方向ベクトル
+	cb.light_colors[0] = light_colors[0]; // 光源1の色ベクトル
+	cb.light_colors[1] = light_colors[1]; // 光源2の色ベクトル
+	cb.output_color = DirectX::XMFLOAT4(0, 0, 0, 0);
 
 	// 定数バッファを更新
 	device.getDeviceContext()->UpdateSubresource(
 		constant_buffer, // データのコピー先ポインタ
 		0, // サブリソースのインデックス
 		nullptr, // コピーするバイト数（定数バッファの場合NULL）
-		&cb1, // コピー元データのポインタ
+		&cb, // コピー元データのポインタ
 		0, // コピー元データの1行のサイズ
 		0 // コピー元データの1深度スライスのサイズ
 	);
@@ -300,28 +366,38 @@ void Render(const Device& device, const VertexShader& vertex_shader, const Pixel
 		0 // 使用するインタフェースの数
 	);
 
-	//-------------------
-	// 1つ目の立方体の描画
-	//-------------------
+	// ピクセルシェーダに定数バッファをセット
+	device.getDeviceContext()->PSSetConstantBuffers(
+		0, // 定数バッファをセットする位置
+		1, // セットする定数バッファの数
+		&constant_buffer // セットする定数バッファのアドレス
+	);
+
+	//-------------
+	// 立方体の描画
+	//-------------
 	device.getDeviceContext()->DrawIndexed(
 		36, // 描画するインデックスの数
 		0, // インデックスバッファから読み取る最初の場所
 		0 // 各インデックス値に加算する値
 	);
 
-	//---------------------------------------
-	// 2つ目の立方体用のシェーダへ渡す変数の更新
-	//---------------------------------------
-	DirectX::XMMATRIX cb2[3];
-	cb2[0] = DirectX::XMMatrixTranspose(world_matrix2); // ワールド変換行列の転置行列
-	cb2[1] = DirectX::XMMatrixTranspose(trans_matrixes.getViewMatrix()); // ビュー変換行列の転置行列
-	cb2[2] = DirectX::XMMatrixTranspose(trans_matrixes.getProjectionMatrix()); // プロジェクション変換行列の転置行列
+	//------------
+	// 光源の描画
+	//------------
+	for (int i = 0; i < 2; ++i) {
+		using DirectX::operator*; // 演算子の名前解決
+		DirectX::XMMATRIX light = DirectX::XMMatrixTranslationFromVector(5.0f * DirectX::XMLoadFloat4(&light_dirs[i]));
+		DirectX::XMMATRIX light_scale = DirectX::XMMatrixScaling(0.2f, 0.2f, 0.2f);
+		light = light_scale * light;
 
-	// 定数バッファを更新
-	device.getDeviceContext()->UpdateSubresource(constant_buffer, 0, nullptr, &cb2, 0, 0);
+		cb.world_matrix = DirectX::XMMatrixTranspose(light);
+		cb.output_color = light_colors[i];
+		device.getDeviceContext()->UpdateSubresource(constant_buffer, 0, nullptr, &cb, 0, 0);
 
-	// 2つ目の立方体の描画
-	device.getDeviceContext()->DrawIndexed(36, 0, 0);
+		device.getDeviceContext()->PSSetShader(pixel_shader_solid.get(), nullptr, 0);
+		device.getDeviceContext()->DrawIndexed(36, 0, 0);
+	}
 
 	// 垂直同期の設定
 	device.getSwapChain()->Present(

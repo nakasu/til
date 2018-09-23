@@ -28,14 +28,9 @@ public:
 	HRESULT initialize(const Window& window);
 
 	/**
-	* ワールド変換行列1を取得
+	* ワールド変換行列を取得
 	*/
-	DirectX::XMMATRIX getWorldMatrix1() const { return world_matrix1; };
-
-	/**
-	* ワールド変換行列2を取得
-	*/
-	DirectX::XMMATRIX getWorldMatrix2() const { return world_matrix2; };
+	DirectX::XMMATRIX getWorldMatrix() const { return world_matrix; };
 
 	/**
 	* ビュー変換行列を取得
@@ -48,8 +43,7 @@ public:
 	DirectX::XMMATRIX getProjectionMatrix() const { return projection_matrix; };
 
 private:
-	DirectX::XMMATRIX world_matrix1; // ワールド変換行列1
-	DirectX::XMMATRIX world_matrix2; // ワールド変換行列2
+	DirectX::XMMATRIX world_matrix; // ワールド変換行列
 	DirectX::XMMATRIX view_matrix; // ビュー変換行列
 	DirectX::XMMATRIX projection_matrix; // プロジェクション変換行列
 };

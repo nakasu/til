@@ -76,5 +76,8 @@
     <FxCompile Include="hlsl\pixel_shader.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
+    <FxCompile Include="hlsl\pixel_shader_solid.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

@@ -15,7 +15,8 @@ public:
 	*/
 	struct SimpleVertex {
 		DirectX::XMFLOAT3 pos; // 座標
-		DirectX::XMFLOAT4 color; // 色
+		DirectX::XMFLOAT3 normal; // 法線
+		//DirectX::XMFLOAT4 color; // 色
 	};
 
 	// コンストラクタ
